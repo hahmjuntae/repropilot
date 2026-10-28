@@ -10,7 +10,11 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "repro": "tsx scripts/repro.ts",
-    "setup:python": "sh scripts/setup-python.sh"
+    "setup:python": "sh scripts/setup-python.sh",
+    "build:demo": "DEMO_EXPORT=1 next build",
+    "record:replay": "tsx scripts/record-replay.ts",
+    "deploy:demo": "npm run build:demo && wrangler deploy",
+    "check:nebius": "tsx scripts/check-nebius.ts"
   },
   "dependencies": {
     "diff": "^9.0.0",
@@ -25,6 +29,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.152.0"
   }
 }

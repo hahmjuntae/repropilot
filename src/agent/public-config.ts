@@ -2,12 +2,23 @@ import { isMockLLM, runnerKind } from "./config";
 import { listExamples } from "./issue";
 import { MODEL_CATALOG } from "./models";
 
+export interface ReplayInfo {
+  example: string;
+  recordedAt: string;
+  verdict: string;
+  runner: string;
+  scriptedModel: boolean;
+  modelCalls: number;
+  testRuns: number;
+}
+
 export interface PublicConfig {
   mockLLM: boolean;
   runner: string;
   tavily: boolean;
   models: { role: string; id: string; label: string; purpose: string }[];
   examples: { id: string; title: string }[];
+  replay?: ReplayInfo;
 }
 
 export async function getPublicConfig(): Promise<PublicConfig> {

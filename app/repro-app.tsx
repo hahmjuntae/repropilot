@@ -38,6 +38,16 @@ const VERDICT_TEXT: Record<FinalReport["verdict"], { label: string; tone: string
   error: { label: "Stopped with an error", tone: "bad" },
 };
 
+function sleep(msec: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(resolve, msec);
+    signal.addEventListener("abort", () => {
+      clearTimeout(t);
+      reject(new DOMException("Aborted", "AbortError"));
+    });
+  });
+}
+
 function ms(n?: number) {
   if (n === undefined) return "";
   return n < 1000 ? `${n} ms` : `${(n / 1000).toFixed(1)} s`;
@@ -100,6 +110,7 @@ export function ReproApp({ config }: { config: PublicConfig }) {
   const [selected, setSelected] = useState<StepId | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  const replay = config.replay;
   const allRuns = useMemo(() => Object.values(steps).flatMap((s) => s.runs), [steps]);
 
   function apply(ev: AgentEvent) {
@@ -158,6 +169,10 @@ export function ReproApp({ config }: { config: PublicConfig }) {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
+      if (replay) {
+        await playRecording(controller.signal);
+        return;
+      }
       const res = await fetch("/api/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -183,8 +198,25 @@ export function ReproApp({ config }: { config: PublicConfig }) {
     }
   }
 
-  const canStart =
-    !running && (mode === "example" ? Boolean(example) : mode === "url" ? /github\.com\/.+\/issues\/\d+/.test(url) : text.trim() && repoUrl.trim());
+  async function playRecording(signal: AbortSignal) {
+    const res = await fetch(`/replay/${encodeURIComponent(example)}.ndjson`, { signal });
+    if (!res.ok) throw new Error(`Recording not found: ${res.status}`);
+    const events = (await res.text())
+      .split("\n")
+      .filter((l) => l.trim())
+      .map((l) => JSON.parse(l) as AgentEvent);
+    let prev = events[0]?.at ?? 0;
+    for (const ev of events) {
+      // 원래 간격 유지, 화면에서 읽을 수 있는 하한과 지루하지 않은 상한 기준
+      await sleep(Math.min(Math.max(ev.at - prev, 350), 1600), signal);
+      prev = ev.at;
+      apply(ev);
+    }
+  }
+
+  const inputReady =
+    mode === "example" ? Boolean(example) : mode === "url" ? /github\.com\/.+\/issues\/\d+/.test(url) : Boolean(text.trim() && repoUrl.trim());
+  const canStart = !running && inputReady && (!replay || mode === "example");
   const selectedStep = selected ? steps[selected] : null;
   const verdict = report ? VERDICT_TEXT[report.verdict] : null;
   const fastModel = config.models.find((m) => m.role === "fast");
@@ -204,8 +236,9 @@ export function ReproApp({ config }: { config: PublicConfig }) {
           <span className="brand-tag">Execution-verified bug reproductions</span>
         </div>
         <div className="badges">
+          {replay && <span className="badge badge-replay">Replay of a recorded run</span>}
           <span className={`badge ${config.mockLLM ? "badge-warn" : "badge-ok"}`}>
-            {config.mockLLM ? "Scripted LLM (MOCK_LLM=1)" : "Nemotron on Token Factory"}
+            {config.mockLLM ? "Scripted model responses (MOCK_LLM=1)" : "Nemotron on Token Factory"}
           </span>
           <span className="badge">Runner: {config.runner === "nebius" ? "Nebius Sandboxes" : config.runner}</span>
           <span className="badge">{config.tavily ? "Tavily on" : "Tavily off"}</span>
@@ -220,6 +253,20 @@ export function ReproApp({ config }: { config: PublicConfig }) {
             reproduction when the test fails for the reported reason, then proposes a patch and keeps it only if the
             test and the full suite pass.
           </p>
+          {replay && (
+            <p className="replay-note">
+              This hosted page replays a run recorded on {replay.recordedAt.slice(0, 10)}. The {replay.testRuns} test runs in it were
+              executed for real by pytest on the {replay.runner} runner.{" "}
+              {replay.scriptedModel
+                ? "The model responses are hand-written fixtures (MOCK_LLM=1), not Nemotron output."
+                : `The ${replay.modelCalls} model responses came from Nemotron on Nebius Token Factory.`}{" "}
+              Live runs on any GitHub issue need the self-hosted server, see the{" "}
+              <a href="https://github.com/hahmjuntae/repropilot#quick-start" target="_blank" rel="noreferrer">
+                README
+              </a>
+              .
+            </p>
+          )}
         </section>
 
         <section className="card input-card">
@@ -257,7 +304,7 @@ export function ReproApp({ config }: { config: PublicConfig }) {
             )}
             <div className="actions">
               <button type="button" className="btn btn-primary" disabled={!canStart} onClick={start}>
-                {running ? "Running" : "Reproduce"}
+                {running ? "Running" : replay ? "Play recorded run" : "Reproduce"}
               </button>
               {running && (
                 <button type="button" className="btn btn-ghost" onClick={() => abortRef.current?.abort()}>
@@ -266,7 +313,10 @@ export function ReproApp({ config }: { config: PublicConfig }) {
               )}
             </div>
           </div>
-          {config.mockLLM && mode !== "example" && (
+          {replay && mode !== "example" && (
+            <p className="hint">The hosted demo can only replay the recorded example. Run the server yourself to try a real issue.</p>
+          )}
+          {!replay && config.mockLLM && mode !== "example" && (
             <p className="hint">Scripted mode only replays bundled examples. Set NEBIUS_API_KEY to run on real issues.</p>
           )}
         </section>

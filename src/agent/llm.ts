@@ -65,21 +65,39 @@ async function scripted(call: JsonCall): Promise<unknown> {
   return answer;
 }
 
+function httpStatus(err: unknown): number | undefined {
+  return typeof err === "object" && err && "status" in err ? Number((err as { status: unknown }).status) : undefined;
+}
+
+async function complete(model: string, call: JsonCall) {
+  const base = { model, messages: call.messages, temperature: 0.2, max_tokens: call.maxTokens ?? 4096 };
+  if (process.env.REPRO_JSON_MODE === "0") return getClient().chat.completions.create(base);
+  try {
+    return await getClient().chat.completions.create({ ...base, response_format: { type: "json_object" } });
+  } catch (err) {
+    // JSON mode 미지원 모델 대응, 프롬프트 지시와 extractJson 으로 폴백
+    if (httpStatus(err) !== 400) throw err;
+    return getClient().chat.completions.create(base);
+  }
+}
+
 /** Calls a Nemotron model on Nebius Token Factory and parses a JSON object from the reply. */
 export async function callJson<T>(call: JsonCall): Promise<JsonResult<T>> {
-  const model = MODEL_CATALOG[call.role].id;
+  let model = MODEL_CATALOG[call.role].id;
   const started = Date.now();
   if (isMockLLM()) {
     const data = (await scripted(call)) as T;
     return { data, record: { purpose: call.purpose, model, mock: true, durationMs: Date.now() - started } };
   }
-  const completion = await getClient().chat.completions.create({
-    model,
-    messages: call.messages,
-    temperature: 0.2,
-    max_tokens: call.maxTokens ?? 4096,
-    response_format: { type: "json_object" },
-  });
+  let completion;
+  try {
+    completion = await complete(model, call);
+  } catch (err) {
+    // 카탈로그 미확인 escalate 모델 대응, reason 모델 폴백
+    if (call.role !== "escalate" || httpStatus(err) !== 404) throw err;
+    model = MODEL_CATALOG.reason.id;
+    completion = await complete(model, call);
+  }
   const text = completion.choices[0]?.message?.content ?? "";
   return {
     data: extractJson(text) as T,

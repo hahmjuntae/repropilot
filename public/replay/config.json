@@ -1,0 +1,40 @@
+{
+  "mockLLM": true,
+  "runner": "local",
+  "tavily": false,
+  "models": [
+    {
+      "role": "fast",
+      "id": "nvidia/Nemotron-3_5-Lightning",
+      "label": "Nemotron 3.5 Lightning",
+      "purpose": "Issue triage, classification and summaries"
+    },
+    {
+      "role": "reason",
+      "id": "nvidia/Nemotron-3.5-Super-VL",
+      "label": "Nemotron 3.5 Super",
+      "purpose": "Writing the reproduction test and the patch"
+    },
+    {
+      "role": "escalate",
+      "id": "nvidia/Nemotron-3-Ultra-550b-a55b",
+      "label": "Nemotron 3 Ultra",
+      "purpose": "Last patch attempt after the reasoning model fails twice"
+    }
+  ],
+  "examples": [
+    {
+      "id": "batchkit",
+      "title": "chunked() silently drops trailing items when the length is not a multiple of size"
+    }
+  ],
+  "replay": {
+    "example": "batchkit",
+    "recordedAt": "2026-10-28T11:40:07.009Z",
+    "verdict": "reproduced-and-fixed",
+    "runner": "local",
+    "scriptedModel": true,
+    "modelCalls": 4,
+    "testRuns": 4
+  }
+}

@@ -81,10 +81,16 @@ button { font: inherit; color: inherit; }
 }
 .badge-ok { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
 .badge-warn { color: var(--warn); background: var(--warn-bg); border-color: transparent; }
+.badge-replay { color: var(--run); border-color: color-mix(in srgb, var(--run) 40%, transparent); background: transparent; }
 
 .main { width: 100%; max-width: 1240px; margin: 0 auto; padding: 28px 24px 40px; flex: 1; }
 .intro h1 { font-size: 24px; line-height: 1.25; letter-spacing: -0.02em; margin: 0 0 8px; max-width: 760px; }
 .intro p { color: var(--muted); margin: 0 0 20px; max-width: 760px; }
+.intro .replay-note {
+  font-size: 13px; color: var(--text); background: var(--surface-2); border-left: 3px solid var(--run);
+  padding: 10px 14px; border-radius: 6px; margin-top: -8px;
+}
+.intro .replay-note a { color: var(--run); }
 
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
 .card-title { font-size: 13px; font-weight: 600; margin: 0 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }

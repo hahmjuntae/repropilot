@@ -1,3 +1,4 @@
+import "./load-env";
 import { runRepro } from "../src/agent/pipeline";
 import type { AgentEvent, IssueInput } from "../src/agent/types";
 
