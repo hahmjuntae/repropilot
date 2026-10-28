@@ -1,0 +1,44 @@
+{
+  "_note": "Scripted model responses for MOCK_LLM=1. They are hand-written fixtures in the shape the prompts request, not recordings of real model output. Tests still run for real.",
+  "triage": [
+    {
+      "summary": "chunked() drops the final partial chunk, so inputs whose length is not a multiple of size lose items.",
+      "language": "python",
+      "expected": "chunked([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4], [5]]",
+      "actual": "chunked([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4]]",
+      "symbols": [
+        "chunked"
+      ],
+      "suspectFiles": [
+        "batchkit/core.py"
+      ],
+      "searchQuery": "python chunked list drops last partial chunk range len(items) - size + 1"
+    }
+  ],
+  "repro": [
+    {
+      "testPath": "tests/test_chunked_trailing.py",
+      "testCode": "from batchkit.chunking import chunked\n\n\ndef test_chunked_keeps_trailing_items():\n    assert chunked([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4], [5]]\n",
+      "rationale": "The issue shows the trailing item 5 is lost.",
+      "expectedFailure": "AssertionError: [[1, 2], [3, 4]] != [[1, 2], [3, 4], [5]]"
+    },
+    {
+      "testPath": "tests/test_chunked_trailing.py",
+      "testCode": "import pytest\n\nfrom batchkit import chunked\n\n\n@pytest.mark.parametrize(\n    \"items, size, expected\",\n    [\n        ([1, 2, 3, 4, 5], 2, [[1, 2], [3, 4], [5]]),\n        ([1, 2], 3, [[1, 2]]),\n        ([], 3, []),\n    ],\n)\ndef test_chunked_keeps_trailing_partial_chunk(items, size, expected):\n    assert chunked(items, size) == expected\n",
+      "rationale": "Covers the reported case, an input shorter than size, and the empty input.",
+      "expectedFailure": "AssertionError on the first two cases: the trailing partial chunk is missing"
+    }
+  ],
+  "patch": [
+    {
+      "explanation": "The range stopped at len(items) - size + 1, which skips the start index of a final partial chunk. Iterating up to len(items) keeps it.",
+      "edits": [
+        {
+          "path": "batchkit/core.py",
+          "search": "range(0, len(items) - size + 1, size)",
+          "replace": "range(0, len(items), size)"
+        }
+      ]
+    }
+  ]
+}
