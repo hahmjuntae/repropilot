@@ -321,7 +321,7 @@ export function ReproApp({ config }: { config: PublicConfig }) {
           )}
         </section>
 
-        {(running || report || error) && (
+        {(running || report || error || Object.keys(steps).length > 0) && (
           <div className="workspace">
             <section className="card timeline">
               <h2 className="card-title">Agent timeline</h2>

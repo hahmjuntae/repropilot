@@ -12,3 +12,5 @@ next-env.d.ts
 .env*.local
 .vercel/
 .DS_Store
+video/frames/
+video/out/

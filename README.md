@@ -155,6 +155,7 @@ src/agent/runners/      local, docker and Nebius Sandboxes runners
 src/agent/detect.ts     framework detection and failure classification
 examples/batchkit/      sample repository, issue and scripted responses
 scripts/                CLI, Token Factory checks, replay recorder
+video/                  narration, capture and build scripts for the demo video
 ```
 
 ## License
