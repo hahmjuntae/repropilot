@@ -1,14 +1,16 @@
 // ego-browser nodejs 로 실행하는 장면 캡처 스크립트, 1920x1080 프레임 기준
-// 실행 기준: ego-browser nodejs < video/capture.mjs
+// 실행 기준: ego-browser nodejs < video/capture.mjs, env 전달 불가라 globalThis 설정 줄을 앞에 붙여 경로 지정
 const fs = await import("node:fs");
-const DIR = "/Users/hahmjuntae/Desktop/workspace/personal/hackathons/nebius-nvidia-wt/submit-prep/video";
+const DIR = globalThis.REPRO_VIDEO_DIR ?? "/Users/hahmjuntae/Desktop/workspace/personal/hackathons/nebius-nvidia/video";
 const DEMO = "https://repropilot.graphite-site.workers.dev/";
 const REPO = "https://github.com/hahmjuntae/repropilot";
 const scenes = JSON.parse(fs.readFileSync(`${DIR}/scenes.json`, "utf8"));
 fs.mkdirSync(`${DIR}/frames`, { recursive: true });
 
-const task = await taskSpace("repropilot demo capture");
-const page = task.page("p1");
+// 대회당 TaskSpace 하나 규칙 기준, 지정 시 기존 공간에 새 탭
+const SPACE = globalThis.REPRO_TASKSPACE;
+const task = SPACE ? await taskSpace(SPACE) : await taskSpace("repropilot demo capture");
+const page = SPACE ? (globalThis.REPRO_PAGE ? task.page(globalThis.REPRO_PAGE) : await task.newPage()) : task.page("p1");
 await page.cdp("Emulation.setDeviceMetricsOverride", { width: 1440, height: 810, deviceScaleFactor: 1920 / 1440, mobile: false });
 
 async function caption(text) {
@@ -41,9 +43,17 @@ async function playToEnd() {
   await page.waitForFunction(() => document.body.innerText.includes("Reproduced and fixed"), undefined, { timeout: 90000 });
 }
 
-async function tab(name) {
+async function tab(name, anchor = "") {
+  await scrollTo(400); // 고정 헤더가 탭을 가리는 위치 방지
   await page.click(`loc=role:tab[name*="${name}"]`, { label: `open ${name} tab` });
-  await scrollTo(400);
+  await page.waitForTimeout(700); // 탭 전환 페이드 중 캡처 방지
+  await page.evaluate((anchor) => {
+    const all = [...document.querySelectorAll("body *")];
+    const el = anchor && all.find((n) => n.children.length === 0 && n.textContent.includes(anchor));
+    const y = el ? el.getBoundingClientRect().top + window.scrollY - 120 : 400;
+    window.scrollTo(0, y);
+  }, anchor);
+  await page.waitForTimeout(250);
 }
 
 let played = false;
@@ -76,7 +86,7 @@ const setups = {
     });
   },
   async "tab-test"() { await tab("Failing test"); },
-  async "tab-patch"() { await tab("Patch"); },
+  async "tab-patch"() { await tab("Patch", "+++ b/batchkit/core.py"); },
   async "tab-pr"() { await tab("PR draft"); },
   async "readme-models"() {
     await page.goto(`${REPO}#where-nemotron-and-token-factory-are-used`);
@@ -102,4 +112,5 @@ for (const scene of scenes) {
   if (scene.id === "intro") await shot(`${DIR}/frames/clean-landing.png`);
   if (scene.id === "patch") await shot(`${DIR}/frames/clean-patch.png`);
 }
+if (SPACE && !globalThis.REPRO_PAGE) await page.close?.();
 console.log({ space: task.spaceId, frames: n });

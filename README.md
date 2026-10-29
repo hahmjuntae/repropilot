@@ -17,6 +17,8 @@ Most bug reports come without a reproduction. Someone has to read the report, fi
 
 ReproPilot treats the test run as the deciding evidence. The model only proposes.
 
+It is meant for maintainers of small and mid-sized open source libraries who triage more issues than they can reproduce by hand.
+
 ## How it works
 
 ```
@@ -35,7 +37,9 @@ issue URL or pasted report
 
 When a candidate test passes on the buggy code, or breaks before it reaches an assertion (import error, collection error, missing fixture), the agent sends the real output back to the model and asks again. Patches go through the same loop. The web UI shows every attempt, including the rejected ones, so you can see why a test was thrown out.
 
-In the bundled example the first test is rejected because it imports a module that does not exist (`batchkit.chunking`). The second one fails on the assertion that matches the report. The patch changes one line, the new test passes, and so do the 8 tests in the suite.
+In the recorded run on the bundled example, the first test from Nemotron 3.5 Super already failed on the assertion that matches the report (`[[1, 2], [3, 4]] == [[1, 2], [3, 4], [5]]`), so no retry was needed. The patch changes one line, the two new tests pass, and so do all 7 tests in the suite. The whole run took 10.1 seconds, including three model calls (2,458 prompt tokens, 2,618 completion tokens).
+
+The retry path is easier to see with `MOCK_LLM=1`. There the scripted first test imports a module that does not exist (`batchkit.chunking`), gets rejected, and the second one is accepted.
 
 ## Where Nemotron and Token Factory are used
 
@@ -159,6 +163,18 @@ examples/batchkit/      sample repository, issue and scripted responses
 scripts/                CLI, Token Factory checks, replay recorder
 video/                  narration, capture and build scripts for the demo video
 ```
+
+## Limits
+
+- Only Python with pytest and JavaScript or TypeScript with vitest or jest are supported.
+- Context selection reads a handful of source files. On a large repository the wrong files get picked first, and that breaks before anything else does.
+- The local runner executes model-written tests on the host. Use the `docker` or `nebius` runner for repositories you do not trust.
+- Token Factory Sandboxes are in beta. The `nebius` runner is written against the REST API but has not run end to end yet, because the beta access request is still pending.
+- The hosted demo replays one recorded run. Running on other issues needs the self-hosted server.
+
+## Built during the hackathon
+
+All code in this repository was written during the Nebius x NVIDIA Global AI Hackathon. The commit history starts on 2026-10-28.
 
 ## License
 

@@ -1,36 +1,36 @@
 [
   { "id": "intro", "setup": "landing", "lines": [
-    "This is ReproPilot. It turns a bug report into a failing test and a fix, and it runs both before it reports anything.",
-    "It was built for the Nebius and NVIDIA hackathon, in the Coding and Agentic Engineering track."
+    "ReproPilot is for open source maintainers who get bug reports without a test. It turns a report into a failing test and a fix, and it runs both before it reports anything.",
+    "It was built for the Nebius and NVIDIA hackathon, in the Coding and Agentic Engineering track, on Nemotron models from Nebius Token Factory."
   ]},
   { "id": "issue", "setup": "issue", "lines": [
     "Here is the bundled example. A batching helper called chunked silently drops the last, smaller batch.",
     "Most bug reports look like this. There is a description and a snippet, but no test."
   ]},
   { "id": "running", "setup": "running", "lines": [
-    "The agent copies the code into a fresh workspace, and a small Nemotron model triages the report.",
-    "Then a larger Nemotron model writes a reproduction test, and the test is executed."
+    "The agent copies the code into a fresh workspace, and Nemotron 3.5 Lightning triages the report.",
+    "Then Nemotron 3.5 Super writes a reproduction test, and the test is executed."
   ]},
-  { "id": "rejected", "setup": "runs-first", "lines": [
-    "The first test is rejected. It imports a module that does not exist, so it fails for the wrong reason.",
-    "The agent sends the real error back to the model and asks again."
+  { "id": "runs", "setup": "runs-first", "lines": [
+    "The test fails on an assertion that matches the report. The last batch, with the number five, is missing.",
+    "Only a failure like that counts. If a test passed, or broke on an import error, the real output would go back to the model for another try."
   ]},
   { "id": "test", "setup": "tab-test", "lines": [
-    "The second test fails on an assertion that matches the report. Only then is the bug marked as reproduced."
+    "Here is the test the model wrote. In this run the first attempt was accepted."
   ]},
   { "id": "patch", "setup": "tab-patch", "lines": [
-    "Next comes the patch. Here the fix is a one line change to the range inside chunked.",
-    "A patch is kept only if the new test passes and the full suite still passes. All eight tests pass."
+    "Next comes the patch. The fix is a one line change to the range inside chunked.",
+    "A patch is kept only if the new test passes and the full suite still passes. All seven tests pass."
   ]},
   { "id": "pr", "setup": "tab-pr", "lines": [
     "The result is a unified diff, the run logs, and a pull request description that is ready to paste."
   ]},
   { "id": "stack", "setup": "readme-models", "lines": [
     "Model calls go to NVIDIA Nemotron on Nebius Token Factory, through its OpenAI compatible API.",
-    "Tests can also run in Token Factory Sandboxes, one isolated virtual machine per run, over the REST API."
+    "A Sandboxes runner can run each test in its own virtual machine. It waits on beta access, so this run used the local runner."
   ]},
   { "id": "honest", "setup": "landing", "lines": [
-    "One note on this recording. The model answers are scripted fixtures, and the page says so. The test runs are real.",
-    "With an API key set, the same flow runs on live Nemotron models. The code is open source under the MIT license."
+    "Everything in this recording is a real run. The answers came from Nemotron, and the tests ran with pytest. The whole run took about ten seconds.",
+    "The hosted page replays that run. The code is open source under the MIT license."
   ]}
 ]
