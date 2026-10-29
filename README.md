@@ -9,7 +9,7 @@ Built for the Nebius x NVIDIA Global AI Hackathon, track **Coding and Agentic En
 - Demo: https://repropilot.graphite-site.workers.dev
 - Video: _link added after upload_
 
-The hosted demo replays a recorded run of the bundled example. The pytest runs in that recording are real. The model responses in the current recording are hand-written fixtures (`MOCK_LLM=1`), and the page says so. See [Live runs](#run-with-nemotron) to run it against Nemotron.
+The hosted demo replays a recorded run of the bundled example. Both parts of that recording are real: the model responses came from Nemotron on Nebius Token Factory (`MOCK_LLM=0`), and the pytest runs came from the local runner. A static host cannot run tests, so live runs on other issues need the self-hosted server, see [Run with Nemotron](#run-with-nemotron).
 
 ## The problem
 
@@ -47,9 +47,9 @@ In the bundled example the first test is rejected because it imports a module th
 | Patch proposals | `pipeline.ts`, step `patch` | `nvidia/Nemotron-3.5-Super-VL`, then `REPRO_MODEL_ESCALATE` |
 | Test runs in VM-isolated Sandboxes over REST | [`src/agent/runners/nebius.ts`](src/agent/runners/nebius.ts) | |
 
-Model IDs live in [`src/agent/models.ts`](src/agent/models.ts) and can be overridden with environment variables. The Lightning and Super IDs come from the Token Factory [November 2026 deprecation notice](https://docs.tokenfactory.nebius.com/model-deprecations-november-2026.md), which lists them as the replacements for Nemotron 3 Nano and Nemotron 3 Super. The default escalation ID, `nvidia/Nemotron-3-Ultra-550b-a55b`, does not appear in the public docs and is marked `verified: false`. If Token Factory answers 404 for it, the last patch attempt falls back to the Super model. `npm run check:nebius -- models` prints which IDs your key can see.
+Model IDs live in [`src/agent/models.ts`](src/agent/models.ts) and can be overridden with environment variables. The Lightning and Super IDs come from the Token Factory [November 2026 deprecation notice](https://docs.tokenfactory.nebius.com/model-deprecations-november-2026.md), which lists them as the replacements for Nemotron 3 Nano and Nemotron 3 Super. The default escalation ID, `nvidia/Nemotron-3-Ultra-550b-a55b`, does not appear in the public docs, but the Token Factory model list returned it on 2026-10-29. If Token Factory answers 404 for it, the last patch attempt falls back to the Super model. `npm run check:nebius -- models` prints which IDs your key can see.
 
-Not every Token Factory model supports JSON mode. ReproPilot asks for `response_format: json_object` first and retries without it on HTTP 400. Replies are parsed after stripping `<think>` blocks and code fences.
+Not every Token Factory model supports JSON mode. ReproPilot asks for `response_format: json_object` first and retries without it on HTTP 400. Replies are parsed after stripping `<think>` blocks and code fences. Nemotron 3.5 spends several hundred reasoning tokens before it answers, so a reply cut off at `max_tokens` with no content is retried once with twice the limit.
 
 ## Quick start
 
@@ -99,6 +99,8 @@ NEBIUS_SANDBOX_IMAGE=...      # image UUID or tag:NAME with python
 ```
 
 `npm run check:nebius -- images` lists tagged images with python in the name. If there are none, `npm run check:nebius -- import-python` imports `python:3.12-slim` and prints its UUID. `npm run check:nebius -- sandbox` then runs `python3 --version` in a disposable instance.
+
+Sandboxes is in beta and is enabled per project on request (the Request beta access button on the Sandboxes page). Until then the API answers 403, and the recorded demo run used the local runner.
 
 The Sandboxes runner uploads the workspace as a tar file, installs dependencies once in a non-disposable instance, keeps the resulting image, and runs each test in a disposable instance started from that image.
 

@@ -98,6 +98,10 @@ export async function callJson<T>(call: JsonCall): Promise<JsonResult<T>> {
     model = MODEL_CATALOG.reason.id;
     completion = await complete(model, call);
   }
+  // 추론 토큰이 상한을 먼저 소진한 빈 답 대응, 상한 두 배로 1회 재시도
+  if (!completion.choices[0]?.message?.content && completion.choices[0]?.finish_reason === "length") {
+    completion = await complete(model, { ...call, maxTokens: Math.min((call.maxTokens ?? 4096) * 2, 16384) });
+  }
   const text = completion.choices[0]?.message?.content ?? "";
   return {
     data: extractJson(text) as T,

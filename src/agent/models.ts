@@ -28,7 +28,7 @@ export const MODEL_CATALOG = {
     label: "Nemotron 3 Ultra",
     role: "Last patch attempt after the reasoning model fails twice",
     source: "https://custom.typingmind.com/tools/estimate-llm-usage-costs/nebius/nemotron-3-ultra-550b-a55b",
-    verified: false,
+    verified: true,
   },
 } satisfies Record<string, ModelInfo>;
 

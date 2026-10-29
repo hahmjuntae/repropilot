@@ -1,5 +1,5 @@
 {
-  "mockLLM": true,
+  "mockLLM": false,
   "runner": "local",
   "tavily": false,
   "models": [
@@ -30,11 +30,11 @@
   ],
   "replay": {
     "example": "batchkit",
-    "recordedAt": "2026-10-28T11:40:07.009Z",
+    "recordedAt": "2026-10-29T01:30:59.062Z",
     "verdict": "reproduced-and-fixed",
     "runner": "local",
-    "scriptedModel": true,
-    "modelCalls": 4,
-    "testRuns": 4
+    "scriptedModel": false,
+    "modelCalls": 3,
+    "testRuns": 3
   }
 }

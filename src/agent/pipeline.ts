@@ -173,7 +173,7 @@ export async function runRepro(input: IssueInput, emit: Emit): Promise<FinalRepo
       attempt: 1,
       exampleId: issue.exampleId,
       messages: triagePrompt(issue, tree),
-      maxTokens: 1024,
+      maxTokens: 4096,
     });
     const triage = normalizeTriage(rawTriage, tree);
     step(ctx, "triage", "done", "Triaged", triage.summary);
