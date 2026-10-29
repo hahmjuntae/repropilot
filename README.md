@@ -7,7 +7,7 @@ ReproPilot takes a bug report and returns two things: a test that fails on the c
 Built for the Nebius x NVIDIA Global AI Hackathon, track **Coding and Agentic Engineering**. Model calls go to **NVIDIA Nemotron** models on **Nebius Token Factory**, and tests can run in **Token Factory Sandboxes**.
 
 - Demo: https://repropilot.graphite-site.workers.dev
-- Video: https://youtu.be/2JTXUPfJueI
+- Video: https://youtu.be/Gp5s8J3TkBs (narration: open-weight Kokoro-82M run locally, `video/revoice.py`)
 
 The hosted demo replays a recorded run of the bundled example. Both parts of that recording are real: the model responses came from Nemotron on Nebius Token Factory (`MOCK_LLM=0`), and the pytest runs came from the local runner. A static host cannot run tests, so live runs on other issues need the self-hosted server, see [Run with Nemotron](#run-with-nemotron).
 
