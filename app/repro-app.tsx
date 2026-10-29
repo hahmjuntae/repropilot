@@ -255,7 +255,7 @@ export function ReproApp({ config }: { config: PublicConfig }) {
           </p>
           {replay && (
             <p className="replay-note">
-              This hosted page replays a run recorded on {replay.recordedAt.slice(0, 10)}. The {replay.testRuns} test runs in it were
+              This hosted page replays a run recorded on <span className="nowrap">{replay.recordedAt.slice(0, 10)}</span>. The {replay.testRuns} test runs in it were
               executed for real by pytest on the {replay.runner} runner.{" "}
               {replay.scriptedModel
                 ? "The model responses are hand-written fixtures (MOCK_LLM=1), not Nemotron output."
